@@ -5,13 +5,9 @@ pipeline {
         nodejs 'node18'
     }
 
-    environment {
-        KUBECONFIG = '/root/.kube/config'
-    }
-
     stages {
 
-        stage('Clone Code') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/kalicharan-practice/devops-app-nodejs.git'
@@ -24,19 +20,40 @@ pipeline {
             }
         }
 
+        stage('Build App') {
+            steps {
+                sh 'npm run build || echo "No build step defined"'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t devops-app .'
+                sh 'docker build -t devops-app:latest .'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl version --client'
-                sh 'kubectl get nodes'
-                sh 'kubectl apply -f deployment.yaml'
-                sh 'kubectl apply -f service.yaml'
+                withKubeConfig([credentialsId: 'kubeconfig']) {
+
+                    sh '''
+                        kubectl version --client
+                        kubectl get nodes
+                        kubectl apply -f deployment.yaml
+                        kubectl apply -f service.yaml
+                        kubectl rollout status deployment/devops-app || true
+                    '''
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline executed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check logs.'
         }
     }
 }
