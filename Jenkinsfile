@@ -5,6 +5,10 @@ pipeline {
         nodejs 'node18'
     }
 
+    environment {
+        KUBECONFIG = '/root/.kube/config'
+    }
+
     stages {
 
         stage('Clone Code') {
@@ -16,7 +20,6 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'node -v'
                 sh 'npm install'
             }
         }
@@ -29,6 +32,8 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
+                sh 'kubectl version --client'
+                sh 'kubectl get nodes'
                 sh 'kubectl apply -f deployment.yaml'
                 sh 'kubectl apply -f service.yaml'
             }
