@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'node18'
+    }
+
     stages {
 
         stage('Clone Code') {
@@ -12,6 +16,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
+                sh 'node -v'
                 sh 'npm install'
             }
         }
